@@ -13,9 +13,9 @@ override.tf.json
 .terraformrc
 terraform.rc
 
-# 계정 고유값과 시크릿은 저장소 밖에 둔다
+# 계정 고유값과 시크릿은 제외한다.
 *.tfvars
 *.tfvars.json
 backend.hcl
 
-# .terraform.lock.hcl은 커밋한다. 위 규칙에 걸리지 않는다
+# .terraform.lock.hcl은 커밋한다.
