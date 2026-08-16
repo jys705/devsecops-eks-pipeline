@@ -1,0 +1,21 @@
+# Terraform
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+tfplan
+*.tfplan
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+
+# 계정 고유값과 시크릿은 저장소 밖에 둔다
+*.tfvars
+*.tfvars.json
+backend.hcl
+
+# .terraform.lock.hcl은 커밋한다. 위 규칙에 걸리지 않는다
