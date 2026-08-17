@@ -42,3 +42,29 @@ resource "aws_vpc_security_group_ingress_rule" "endpoint_https_from_node" {
   to_port                      = 443
   ip_protocol                  = "tcp"
 }
+
+# 컨트롤 플레인 ENI에 붙는 SG. 시작 템플릿에 노드 SG를 지정하면 EKS가 클러스터 SG를
+# 노드에 붙이지 않으므로, 클러스터 SG의 Self 규칙에 노드가 들어가지 않는다.
+# 이 규칙이 없으면 노드가 API 서버 443에 닿지 못해 조인 자체가 실패한다.
+
+# EKS가 만드는 eks-cluster-sg-p2-devsecops-*를 직접 고치는 방법도 있다. 
+# 다만, 안 하는 이유는 그게 AWS 관리 리소스이고, 클러스터를 업데이트하면 EKS가 기본 규칙을 되살린다. 
+# SG를 하나 더 붙이면 같은 ENI에서 규칙이 합쳐지므로 결과는 같고, 소유권이 코드에 남는다.
+resource "aws_security_group" "control_plane" {
+  name        = "${var.project}-control-plane"
+  description = "EKS control plane ENIs"
+  vpc_id      = aws_vpc.main.id
+
+  tags = {
+    Name = "${var.project}-control-plane"
+  }
+}
+
+resource "aws_vpc_security_group_ingress_rule" "control_plane_https_from_node" {
+  security_group_id            = aws_security_group.control_plane.id
+  description                  = "Kubelet and pods to Kubernetes API"
+  referenced_security_group_id = aws_security_group.node.id
+  from_port                    = 443
+  to_port                      = 443
+  ip_protocol                  = "tcp"
+}

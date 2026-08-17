@@ -14,10 +14,10 @@ terraform {
   }
 
   backend "s3" {
-    key          = "infra/terraform.tfstate"   # 버킷 안에서의 경로
+    key          = "infra/terraform.tfstate" # 버킷 안에서의 경로
     region       = "ap-northeast-2"
     encrypt      = true
-    use_lockfile = true   # S3 객체를 조건부 쓰기로 만들어, 원격 파일이 이미 있으면 생성이 실패하고, 작업이 끝나면 지운다.
+    use_lockfile = true # S3 객체를 조건부 쓰기로 만들어, 원격 파일이 이미 있으면 생성이 실패하고, 작업이 끝나면 지운다.
     # bucket과 kms_key_id는 backend.hcl에서 온다 (계정 ID를 코드에 안 적는다)
   }
 }
