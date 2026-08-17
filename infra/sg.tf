@@ -68,3 +68,27 @@ resource "aws_vpc_security_group_ingress_rule" "control_plane_https_from_node" {
   to_port                      = 443
   ip_protocol                  = "tcp"
 }
+
+# 컨트롤 플레인이 kubelet에 연결하는 경로. kubectl exec과 logs, port-forward가
+# 이 포트를 사용한다. 출발지는 EKS가 컨트롤 플레인 네트워크 인터페이스에
+# 자동으로 연결하는 클러스터 보안 그룹이다.
+resource "aws_vpc_security_group_ingress_rule" "node_kubelet_from_control_plane" {
+  security_group_id            = aws_security_group.node.id
+  description                  = "Kubelet from control plane"
+  referenced_security_group_id = aws_eks_cluster.main.vpc_config[0].cluster_security_group_id
+  from_port                    = 10250
+  to_port                      = 10250
+  ip_protocol                  = "tcp"
+}
+
+# 노드 사이의 파드 통신. VPC CNI가 파드에 노드 네트워크 인터페이스의 보조 IP를
+# 할당하므로, 다른 노드의 파드로 가는 패킷은 목적지 노드 SG의 평가를 받는다.
+# 포트를 좁히지 않는 이유는 파드 배치를 스케줄러가 결정하기 때문이다. 특정 포트만
+# 허용하면 같은 두 파드가 어느 노드에 뜨는지에 따라 통신되거나 차단된다.
+# 파드 단위 제한은 NetworkPolicy가 담당하고, 설계서 §8이 미채택 근거를 갖는다.
+resource "aws_vpc_security_group_ingress_rule" "node_all_from_node" {
+  security_group_id            = aws_security_group.node.id
+  description                  = "Inter-node pod traffic"
+  referenced_security_group_id = aws_security_group.node.id
+  ip_protocol                  = "-1"
+}

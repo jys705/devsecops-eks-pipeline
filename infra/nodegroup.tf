@@ -58,6 +58,8 @@ resource "aws_eks_node_group" "main" {
   depends_on = [
     aws_iam_role_policy_attachment.node,
     aws_vpc_security_group_ingress_rule.control_plane_https_from_node,
+    aws_vpc_security_group_ingress_rule.node_kubelet_from_control_plane,
+    aws_vpc_security_group_ingress_rule.node_all_from_node,
     aws_vpc_endpoint.interface,
     aws_vpc_endpoint.s3,
   ]
