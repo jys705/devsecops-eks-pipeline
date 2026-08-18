@@ -44,6 +44,31 @@ data "aws_iam_policy_document" "s3_endpoint" {
       identifiers = ["*"]
     }
   }
+
+  # 이 정책의 값은 관리자 자격 증명을 들고 있어도 이 VPC 안에서는 두 버킷 말고 다른 S3 버킷에 닿을 수 없다는 것
+  statement {
+    sid       = "AllowSessionLogPut"
+    effect    = "Allow"
+    actions   = ["s3:PutObject"]
+    resources = ["${aws_s3_bucket.session_logs.arn}/session-logs/*"]
+
+    principals {
+      type        = "*"
+      identifiers = ["*"]
+    }
+  }
+
+  statement {
+    sid       = "AllowSessionLogEncryptionCheck"
+    effect    = "Allow"
+    actions   = ["s3:GetEncryptionConfiguration"]
+    resources = [aws_s3_bucket.session_logs.arn]
+
+    principals {
+      type        = "*"
+      identifiers = ["*"]
+    }
+  }
 }
 
 resource "aws_vpc_endpoint" "s3" {

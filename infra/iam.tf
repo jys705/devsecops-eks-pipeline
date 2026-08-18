@@ -54,3 +54,28 @@ resource "aws_iam_role_policy_attachment" "node" {
   role       = aws_iam_role.node.name
   policy_arn = each.value
 }
+
+# AmazonSSMManagedInstanceCore에는 임의 버킷 쓰기 권한이 없어서 인라인으로 붙인다. 
+# PutObject의 리소스를 버킷 전체가 아니라 session-logs/ 접두어로 좁혔다.
+# KMS 권한은 넣지 않는다. AWS 관리형 키는 인스턴스 프로파일의 명시적 권한을 요구하지 않는다.
+data "aws_iam_policy_document" "node_session_logs" {
+  statement {
+    sid       = "PutSessionLogs"
+    effect    = "Allow"
+    actions   = ["s3:PutObject"]
+    resources = ["${aws_s3_bucket.session_logs.arn}/session-logs/*"]
+  }
+
+  statement {
+    sid       = "ReadBucketEncryption"
+    effect    = "Allow"
+    actions   = ["s3:GetEncryptionConfiguration"]
+    resources = [aws_s3_bucket.session_logs.arn]
+  }
+}
+
+resource "aws_iam_role_policy" "node_session_logs" {
+  name   = "${var.project}-node-session-logs"
+  role   = aws_iam_role.node.id
+  policy = data.aws_iam_policy_document.node_session_logs.json
+}

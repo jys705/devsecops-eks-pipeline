@@ -62,6 +62,7 @@ resource "aws_eks_node_group" "main" {
     aws_vpc_security_group_ingress_rule.node_all_from_node,
     aws_vpc_endpoint.interface,
     aws_vpc_endpoint.s3,
+    aws_iam_role_policy.node_session_logs,
   ]
 
   tags = {
