@@ -146,20 +146,12 @@ data "aws_iam_policy_document" "flow_logs" {
     effect = "Allow"
 
     actions = [
-      "logs:CreateLogGroup",
       "logs:CreateLogStream",
       "logs:PutLogEvents",
       "logs:DescribeLogStreams",
     ]
 
     resources = ["${aws_cloudwatch_log_group.flow_logs.arn}:*"]
-  }
-
-  statement {
-    sid       = "DescribeLogGroups"
-    effect    = "Allow"
-    actions   = ["logs:DescribeLogGroups"]
-    resources = ["arn:aws:logs:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:log-group:*"]
   }
 }
 
