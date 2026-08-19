@@ -1,0 +1,48 @@
+name: checkov
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  scan:
+    name: checkov (${{ matrix.category }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - category: terraform-infra
+            framework: terraform
+            directory: infra
+          - category: terraform-bootstrap
+            framework: terraform
+            directory: bootstrap
+          - category: github-actions
+            framework: github_actions
+            directory: .
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Checkov
+        uses: bridgecrewio/checkov-action@v12
+        with:
+          directory: ${{ matrix.directory }}
+          framework: ${{ matrix.framework }}
+          config_file: .checkov.yml
+          quiet: true
+          compact: true
+          output_format: cli,sarif
+          output_file_path: console,results.sarif
+
+      - name: Upload SARIF
+        if: always() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: results.sarif
+          category: checkov-${{ matrix.category }}
