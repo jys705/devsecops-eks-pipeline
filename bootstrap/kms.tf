@@ -11,6 +11,9 @@ resource "aws_kms_alias" "tfstate" {
 }
 
 data "aws_iam_policy_document" "tfstate_key" {
+  #checkov:skip=CKV_AWS_111:KMS 키 정책은 자기 키를 대상으로 하므로 Resource = "*"가 규격이다. 키 ARN을 정책 안에서 참조할 수 없다
+  #checkov:skip=CKV_AWS_356:위와 같다. IAM 정책 판정 기준을 키 정책에 적용해서 나온 결과다
+  #checkov:skip=CKV_AWS_109:위와 같다
   statement {
     sid       = "DelegateToAccountIAM"
     effect    = "Allow"
