@@ -9,7 +9,7 @@ resource "aws_launch_template" "node" {
 
   metadata_options {
     http_endpoint               = "enabled"
-    # http_tokens                 = "required" # 기본값은 optional (IMDSv1 허용)
+    http_tokens                 = "required" # 기본값은 optional (IMDSv1 허용)
     http_put_response_hop_limit = 1          # 기본값은 사실 1이다. 그런데도 명시하는 이유는 EKS가 자동 생성하는 시작 템플릿은 이 값을 2로 둔다. 
   }
 
