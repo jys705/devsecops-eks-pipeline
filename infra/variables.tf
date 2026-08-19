@@ -46,9 +46,9 @@ variable "flow_log_retention_days" {
 }
 
 variable "github_repository" {
-  description = "OIDC trust policy의 sub 조건에 들어가는 저장소 식별자"
+  description = "OIDC sub 클레임의 repo 세그먼트. 워크플로가 출력한 값을 그대로 넣는다"
   type        = string
-  default     = "jys705/devsecops-eks-pipeline"
+  default     = "jys705@209275516/devsecops-eks-pipeline@1335861075"
 }
 
 variable "github_default_branch" {

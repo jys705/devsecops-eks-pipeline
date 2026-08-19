@@ -37,7 +37,8 @@ data "aws_iam_policy_document" "gha_plan_assume" {
     condition {
       test     = "StringEquals"
       variable = "token.actions.githubusercontent.com:sub"
-      values   = [local.gha_sub_main]
+      # push 이벤트는 브랜치까지, pull_request 이벤트는 저장소까지만 고정된다
+      values = [local.gha_sub_main, local.gha_sub_pr]
     }
   }
 }
