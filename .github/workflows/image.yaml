@@ -1,0 +1,36 @@
+# 같은 initiate-layer-upload를 plan 잡에서는 거부, push 잡에서는 성공으로 두는 게 핵심이다.
+name: image
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/p2-devsecops-gha-push
+          aws-region: ap-northeast-2
+
+      - name: Who am I
+        run: aws sts get-caller-identity
+
+      - name: ECR write is allowed
+        run: aws ecr initiate-layer-upload --repository-name p2-devsecops-app
+
+      - name: tfstate must be denied
+        run: |
+          if aws s3api get-object \
+               --bucket tfstate-${{ vars.AWS_ACCOUNT_ID }}-apne2 \
+               --key infra/terraform.tfstate /dev/null 2> err.txt; then
+            echo "FAIL: push role read the state file"
+            exit 1
+          fi
+          cat err.txt
+          grep -q "AccessDenied" err.txt

@@ -44,3 +44,15 @@ variable "flow_log_retention_days" {
   type        = number
   default     = 1
 }
+
+variable "github_repository" {
+  description = "OIDC trust policy의 sub 조건에 들어가는 저장소 식별자"
+  type        = string
+  default     = "jys705/devsecops-eks-pipeline"
+}
+
+variable "github_default_branch" {
+  description = "push 이벤트에서 신뢰할 브랜치"
+  type        = string
+  default     = "main"
+}
