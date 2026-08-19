@@ -14,6 +14,16 @@ resource "aws_s3_bucket" "cloudtrail" {
   }
 }
 
+# 버저닝은 provider 4.x부터 aws_s3_bucket 안의 인자가 아니라 별도 리소스다. 
+# 기본값은 꺼짐이고 결함 항목(CKV_AWS_21)이다.
+resource "aws_s3_bucket_versioning" "cloudtrail" {
+  bucket = aws_s3_bucket.cloudtrail.id
+
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
 resource "aws_s3_bucket_public_access_block" "cloudtrail" {
   bucket = aws_s3_bucket.cloudtrail.id
 
