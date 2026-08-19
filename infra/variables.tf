@@ -44,3 +44,15 @@ variable "flow_log_retention_days" {
   type        = number
   default     = 1
 }
+
+variable "github_repository" {
+  description = "OIDC sub 클레임의 repo 세그먼트. 워크플로가 출력한 값을 그대로 넣는다"
+  type        = string
+  default     = "jys705@209275516/devsecops-eks-pipeline@1335861075"
+}
+
+variable "github_default_branch" {
+  description = "push 이벤트에서 신뢰할 브랜치"
+  type        = string
+  default     = "main"
+}
