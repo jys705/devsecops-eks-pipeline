@@ -19,3 +19,5 @@ terraform.rc
 backend.hcl
 
 # .terraform.lock.hcl은 커밋한다.
+# macOS
+.DS_Store
