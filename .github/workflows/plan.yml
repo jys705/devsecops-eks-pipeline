@@ -30,7 +30,7 @@ jobs:
           while [ $(( ${#PAYLOAD} % 4 )) -ne 0 ]; do PAYLOAD="${PAYLOAD}="; done
           echo "$PAYLOAD" | tr '_-' '/+' | base64 -d | jq '{sub, aud, event_name, ref}'
 
-      - uses: aws-actions/configure-aws-credentials@v4
+      - uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/p2-devsecops-gha-plan
           aws-region: ap-northeast-2
