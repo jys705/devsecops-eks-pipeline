@@ -16,7 +16,7 @@ def healthz():
 @app.get("/resolve")
 def resolve():
     host = request.args.get("host", "localhost")
-    output = subprocess.check_output(f"getent hosts {host}", shell=True, text=True)
+    output = subprocess.check_output(["getent", "hosts", host], text=True)
     return jsonify(host=host, result=output.strip())
 
 
