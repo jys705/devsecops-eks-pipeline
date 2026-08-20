@@ -12,6 +12,7 @@ permissions:
 
 jobs:
   scan:
+    name: image (scan)
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -73,6 +74,7 @@ jobs:
           retention-days: 1
 
   push:
+    name: image (push)
     needs: scan
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
