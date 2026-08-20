@@ -1,0 +1,28 @@
+# Insights 탭 → Dependency graph → Dependabot에 두 줄이 생기고, 각 줄에 마지막 검사 시각과 Check for updates 버튼
+# github-actions의 directory는 /가 유일한 값. 
+# .github/workflows를 적으면 안 되고 Dependabot이 알아서 그 아래를 본다.
+# pip는 requirements.txt가 있는 디렉터리를 가리켜야 하므로 /app
+
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: Asia/Seoul
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: chore
+
+  - package-ecosystem: pip
+    directory: "/app"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: Asia/Seoul
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: chore

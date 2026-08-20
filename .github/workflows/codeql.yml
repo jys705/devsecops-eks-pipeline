@@ -1,0 +1,48 @@
+# Actions 탭에 codeql (python)과 codeql (actions) 두 잡을 만들고, Security 탭 Code scanning의 도구 필터에 CodeQL을 추가
+# Checkov와 CodeQL은 category가 같아도 서로 덮어쓰지 않는다.
+  # 구분의 기준이 category 하나가 아니라 도구 이름과 워크플로 파일 경로, 잡 이름까지 묶은 키라서 워크플로가 다르면 충돌하지 않는다.
+# 저장소 Security 탭 → Code scanning → Tools → CodeQL → Advanced setup을 누르면 GitHub이 언어를 감지해 템플릿을 생성. 
+# 그 템플릿에 category와 actions 언어를 더한 것이 해당 파일입니다. 옵션 전체는 docs.github.com의 Workflow configuration options for code scanning에
+
+name: codeql
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "17 3 * * 1"
+
+permissions:
+  contents: read
+
+jobs:
+  analyze:
+    name: codeql (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+      # 첫 푸시에서는 이 줄을 주석 처리한다. 두 번째 푸시에서 되살린다.
+      # security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - language: actions
+            build-mode: none
+          - language: python
+            build-mode: none
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v4
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: ${{ matrix.build-mode }}
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v4
+        with:
+          category: "/language:${{ matrix.language }}"
