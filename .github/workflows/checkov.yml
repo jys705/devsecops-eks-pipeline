@@ -26,6 +26,9 @@ jobs:
           - category: github-actions
             framework: github_actions
             directory: .
+          - category: dockerfile
+            framework: dockerfile
+            directory: app
     steps:
       - uses: actions/checkout@v7
 

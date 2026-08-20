@@ -1,18 +1,82 @@
-# 같은 initiate-layer-upload를 plan 잡에서는 거부, push 잡에서는 성공으로 두는 게 핵심이다.
+# scan은 fork PR에서도 돌아야 하므로 잡 조건이 없다.
+# push는 main에 머지된 것만 올린다.
 name: image
 
 on:
   push:
     branches: [main]
+  pull_request:
 
 permissions:
   contents: read
-  id-token: write
 
 jobs:
-  push:
+  scan:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    outputs:
+      image_id: ${{ steps.built.outputs.id }}
     steps:
+      - uses: actions/checkout@v7
+
+      - name: Build image
+        run: docker build -t p2-devsecops-app:${{ github.sha }} app
+
+      - name: Record image id
+        id: built
+        run: |
+          ID=$(docker image inspect -f '{{.Id}}' p2-devsecops-app:${{ github.sha }})
+          echo "scanned image id: $ID"
+          echo "id=$ID" >> "$GITHUB_OUTPUT"
+
+      - name: Trivy
+        uses: aquasecurity/trivy-action@PASTE_COMMIT_SHA_HERE # v0.36.0
+        with:
+          image-ref: p2-devsecops-app:${{ github.sha }}
+          format: sarif
+          output: trivy-results.sarif
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: '1'
+
+      - name: Upload SARIF
+        if: always() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: trivy-results.sarif
+          category: trivy-image
+
+      - name: Save image
+        run: docker save p2-devsecops-app:${{ github.sha }} -o image.tar
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: image-${{ github.sha }}
+          path: image.tar
+          retention-days: 1
+
+  push:
+    needs: scan
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: image-${{ github.sha }}
+
+      - name: Load image and compare id
+        run: |
+          docker load -i image.tar
+          LOADED=$(docker image inspect -f '{{.Id}}' p2-devsecops-app:${{ github.sha }})
+          echo "scanned by trivy : ${{ needs.scan.outputs.image_id }}"
+          echo "loaded for push  : $LOADED"
+          [ "$LOADED" = "${{ needs.scan.outputs.image_id }}" ]
+
       - uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/p2-devsecops-gha-push
@@ -20,9 +84,6 @@ jobs:
 
       - name: Who am I
         run: aws sts get-caller-identity
-
-      - name: ECR write is allowed
-        run: aws ecr initiate-layer-upload --repository-name p2-devsecops-app
 
       - name: tfstate must be denied
         run: |
@@ -34,3 +95,18 @@ jobs:
           fi
           cat err.txt
           grep -q "AccessDenied" err.txt
+
+      - name: Push to ECR
+        run: |
+          REG=${{ vars.AWS_ACCOUNT_ID }}.dkr.ecr.ap-northeast-2.amazonaws.com
+          aws ecr get-login-password --region ap-northeast-2 \
+            | docker login --username AWS --password-stdin "$REG"
+          docker tag p2-devsecops-app:${{ github.sha }} "$REG/p2-devsecops-app:${{ github.sha }}"
+          docker push "$REG/p2-devsecops-app:${{ github.sha }}"
+
+      - name: Digest in ECR
+        run: |
+          aws ecr describe-images \
+            --repository-name p2-devsecops-app \
+            --image-ids imageTag=${{ github.sha }} \
+            --query 'imageDetails[0].{digest:imageDigest,pushedAt:imagePushedAt,bytes:imageSizeInBytes}'
