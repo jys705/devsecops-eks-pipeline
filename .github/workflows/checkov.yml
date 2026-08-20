@@ -27,7 +27,7 @@ jobs:
             framework: github_actions
             directory: .
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Checkov
         uses: bridgecrewio/checkov-action@v12
