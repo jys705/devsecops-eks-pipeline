@@ -31,22 +31,37 @@ jobs:
           echo "scanned image id: $ID"
           echo "id=$ID" >> "$GITHUB_OUTPUT"
 
-      - name: Trivy
-        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
+      - name: Trivy report
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           image-ref: p2-devsecops-app:${{ github.sha }}
+          scanners: vuln
           format: sarif
           output: trivy-results.sarif
-          severity: CRITICAL,HIGH
           ignore-unfixed: true
-          exit-code: '1'
-
+          exit-code: '0'
+      
+      # 순서가 설정. 
+      # 업로드를 게이트 앞에 두면 if: always()가 필요 없다. 
+      # Checkov는 검사와 업로드가 한 스텝이라 always()를 걸어야 했지만, 여기서는 순서로 같은 결과를 얻는다. 
+      # 그리고 게이트가 실패하면 뒤의 Save image와 아티팩트 업로드가 안 돌아 취약한 이미지가 push 잡으로 넘어갈 경로 자체가 없다.
       - name: Upload SARIF
-        if: always() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: trivy-results.sarif
           category: trivy-image
+
+      - name: Trivy gate
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: p2-devsecops-app:${{ github.sha }}
+          scanners: vuln
+          format: table
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: '1'
+          skip-setup-trivy: true
 
       - name: Save image
         run: docker save p2-devsecops-app:${{ github.sha }} -o image.tar
