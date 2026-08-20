@@ -32,7 +32,7 @@ jobs:
           echo "id=$ID" >> "$GITHUB_OUTPUT"
 
       - name: Trivy
-        uses: aquasecurity/trivy-action@PASTE_COMMIT_SHA_HERE # v0.36.0
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
         with:
           image-ref: p2-devsecops-app:${{ github.sha }}
           format: sarif
