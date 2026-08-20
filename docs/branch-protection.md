@@ -11,7 +11,8 @@ GitHub은 PR 저자가 자기 PR을 승인하는 것을 설정과 무관하게 �
 
 그래서 검사와 승인을 다른 룰셋에 뒀다. `main-gate`는 bypass 대상이 없어
 관리자도 통과하지 못하고, `main-review`만 Repository admin이 bypass한다.
-bypass 기록은 Rule Insights에 건별로 남는다.
+개인 계정 저장소에는 Rule Insights 화면이 없어 bypass 이력을 따로 조회할 수
+없다. 승인 없이 머지된 사실은 해당 PR의 Reviewers가 비어 있는 것으로 남는다.
 
 ## main-gate
 
@@ -59,3 +60,25 @@ Security alerts를 모두 All로 뒀다. 기본값은 Only errors와 High or hig
 
 `Require approval of the most recent reviewable push`는 켜지 않았다.
 운영자가 한 명이라 지금은 효과가 없다.
+
+## 확인한 것
+
+code scanning 결과는 도구마다 체크 런이 따로 붙는다. `Code scanning results`
+뒤에 CodeQL, Checkov, Trivy가 각각 온다. 이 셋은 required status checks 목록에
+없고 `Required` 뱃지도 없다. 결함이 있는 PR에서 required 여덟 개가 전부 통과한
+채로 이 중 하나만 실패했고 머지가 막혔다. 두 기제가 다른 줄이라는 것이 화면에
+그대로 보인다.
+
+차단은 `github-advanced-security` 봇이 리뷰어로 붙어 승인을 요구하는 방식으로
+이뤄진다. 머지 상자에 승인 요구와 알림 건수가 함께 뜬다. 같은 시점에 승인 없이
+머지된 PR이 있으므로, 이 승인 요구는 `main-review`가 아니라 봇의 것이다.
+
+Checkov와 Trivy 체크 런은 `No new alerts in code changed by this pull request`로
+통과했다. 이 저장소에는 억제된 Checkov 알림이 세 건 있지만 그 줄이 PR diff에
+없어서 판정에 들어오지 않았다.
+
+`Require branches to be up to date before merging`은 처음에 꺼진 채로 저장돼
+있었다. 검사 여덟 개가 전부 초록으로 돌았기 때문에 그동안 드러나지 않았고,
+main보다 뒤처진 PR이 생기고 나서야 배너가 없다는 것으로 알았다. 설정 하나가
+빠진 것은 그 설정이 판정할 상황이 와야 드러난다. 그래서 화면을 훑는 대신
+`gh api`로 룰셋을 받아 규칙 여섯 개와 각 값을 출력으로 대조했다.
