@@ -31,6 +31,19 @@ jobs:
           ID=$(docker image inspect -f '{{.Id}}' p2-devsecops-app:${{ github.sha }})
           echo "scanned image id: $ID"
           echo "id=$ID" >> "$GITHUB_OUTPUT"
+          
+      - name: Smoke test
+        run: |
+          docker run -d --name smoke --read-only --tmpfs /tmp \
+            -p 8080:8080 p2-devsecops-app:${{ github.sha }}
+          for i in $(seq 1 15); do
+            if curl -fsS http://localhost:8080/healthz; then OK=1; break; fi
+            sleep 1
+          done
+          echo
+          docker logs smoke
+          docker rm -f smoke
+          [ "${OK:-0}" = "1" ]
 
       - name: Trivy report
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
@@ -100,11 +113,13 @@ jobs:
           name: image-${{ github.sha }}
 
       - name: Load image and compare id
+        id: loaded
         run: |
           docker load -i image.tar
           LOADED=$(docker image inspect -f '{{.Id}}' p2-devsecops-app:${{ github.sha }})
           echo "scanned by trivy : ${{ needs.scan.outputs.image_id }}"
           echo "loaded for push  : $LOADED"
+          echo "id=$LOADED" >> "$GITHUB_OUTPUT"
           [ "$LOADED" = "${{ needs.scan.outputs.image_id }}" ]
 
       - uses: aws-actions/configure-aws-credentials@v6
@@ -154,11 +169,26 @@ jobs:
         if: always()
         run: |
           {
-            echo "### 배포 가능한 이미지"
+            echo "### 스캔한 이미지와 올린 이미지가 같은가"
+            echo ""
+            echo "| 시점 | 이미지 ID |"
+            echo "|---|---|"
+            echo "| Trivy가 검사할 때 | \`${{ needs.scan.outputs.image_id }}\` |"
+            echo "| tar를 불러온 뒤 | \`${{ steps.loaded.outputs.id }}\` |"
+            echo ""
+            echo "**이 두 줄이 같아야 한다.** 다르면 앞 스텝이 잡을 실패시킨다."
+            echo ""
+            echo "### ECR에 올린 것"
             echo ""
             echo "| 항목 | 값 |"
             echo "|---|---|"
             echo "| 커밋 | \`${{ github.sha }}\` |"
-            echo "| 스캔한 이미지 ID | \`${{ needs.scan.outputs.image_id }}\` |"
-            echo "| 배포한 뒤 ECR 다이제스트 | \`${{ steps.digest.outputs.value }}\` |"
+            echo "| 매니페스트 다이제스트 | \`${{ steps.digest.outputs.value }}\` |"
+            echo ""
+            echo "**위 Attestation Created 링크의 Subject digest가 이 다이제스트와 같으면 성공이다.**"
+            echo "배포할 때 \`scripts/deploy.sh\`가 매니페스트에 채우는 값도 이것이다."
+            echo ""
+            echo "세 값이 서로 다른 것이 정상이다. 이미지 ID는 이미지 설정의 해시, 매니페스트 다이제스트는"
+            echo "설정과 레이어 목록을 담은 매니페스트의 해시, 아래 Artifacts의 Digest는 tar를 담은"
+            echo "압축 파일의 해시다. 대상이 셋 다 다르다."
           } >> "$GITHUB_STEP_SUMMARY"
