@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: p2-devsecops
+  labels:
+    # enforce 하나만 걸면 파드는 막히지만 Deployment apply가 조용히 성공한다. 
+    # warn이 apply 출력에 경고 줄을 붙여 그 자리에서 알게 하고, audit이 audit 로그 이벤트에 위반 항목을 주석으로 남긴다.
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/warn: restricted

@@ -29,6 +29,9 @@ jobs:
           - category: dockerfile
             framework: dockerfile
             directory: app
+          - category: kubernetes
+            framework: kubernetes
+            directory: k8s
     steps:
       - uses: actions/checkout@v7
 
