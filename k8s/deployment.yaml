@@ -28,7 +28,7 @@ spec:
       # 컨테이너 수준 securityContext
       containers:
         - name: app
-          image: 453722413421.dkr.ecr.ap-northeast-2.amazonaws.com/p2-devsecops-app:a11c7eecea7dfff6bc9c95e16d96229a88f316ff@sha256:b19322f69509c49a50872da4b05a5ed75acf7960af2402b41d07338fc5f85935
+          image: __REGISTRY__/p2-devsecops-app:__COMMIT__@sha256:__DIGEST__
           imagePullPolicy: Always
           ports:
             - name: http
