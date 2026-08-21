@@ -37,6 +37,11 @@ jobs:
           ignore-unfixed: true
           exit-code: '0'
 
+      - name: Relabel tool
+        run: |
+          jq '.runs[].tool.driver.name = "Trivy rescan"' trivy-results.sarif > relabeled.sarif
+          mv relabeled.sarif trivy-results.sarif
+
       - name: Upload SARIF
         uses: github/codeql-action/upload-sarif@v4
         with:
