@@ -64,6 +64,18 @@ jobs:
           exit-code: '1'
           skip-setup-trivy: true
 
+      - name: Summary
+        if: always()
+        run: |
+          cat trivy-table.txt || true
+          {
+            echo "### Trivy (CRITICAL, HIGH)"
+            echo ""
+            echo '```'
+            cat trivy-table.txt 2>/dev/null || echo "결과 파일 없음"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Save image
         run: docker save p2-devsecops-app:${{ github.sha }} -o image.tar
 
@@ -81,6 +93,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
+      attestations: write
     steps:
       - uses: actions/download-artifact@v8
         with:
@@ -122,8 +135,30 @@ jobs:
           docker push "$REG/p2-devsecops-app:${{ github.sha }}"
 
       - name: Digest in ECR
+        id: digest
         run: |
           aws ecr describe-images \
             --repository-name p2-devsecops-app \
             --image-ids imageTag=${{ github.sha }} \
-            --query 'imageDetails[0].{digest:imageDigest,pushedAt:imagePushedAt,bytes:imageSizeInBytes}'
+            --query 'imageDetails[0].{digest:imageDigest,pushedAt:imagePushedAt,bytes:imageSizeInBytes}' \
+            | tee ecr.json
+          echo "value=$(jq -r .digest ecr.json)" >> "$GITHUB_OUTPUT"
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v4
+        with:
+          subject-name: ${{ vars.AWS_ACCOUNT_ID }}.dkr.ecr.ap-northeast-2.amazonaws.com/p2-devsecops-app
+          subject-digest: ${{ steps.digest.outputs.value }}
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "### 배포 가능한 이미지"
+            echo ""
+            echo "| 항목 | 값 |"
+            echo "|---|---|"
+            echo "| 커밋 | \`${{ github.sha }}\` |"
+            echo "| 스캔한 이미지 ID | \`${{ needs.scan.outputs.image_id }}\` |"
+            echo "| 배포한 뒤 ECR 다이제스트 | \`${{ steps.digest.outputs.value }}\` |"
+          } >> "$GITHUB_STEP_SUMMARY"

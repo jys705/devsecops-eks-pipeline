@@ -1,0 +1,70 @@
+name: rescan
+
+on:
+  schedule:
+    # 매주 월요일 18:17 UTC = 화요일 03:17 KST.
+    # 정각을 피하는 것은 GitHub의 예약 실행이 정각에 몰려 지연되기 때문이다.
+    - cron: '17 18 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+  security-events: write
+
+jobs:
+  image:
+    name: rescan (image)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/p2-devsecops-gha-plan
+          aws-region: ap-northeast-2
+
+      - uses: aws-actions/amazon-ecr-login@v2
+        id: ecr
+
+      - name: Trivy report
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: ${{ steps.ecr.outputs.registry }}/p2-devsecops-app:${{ github.sha }}
+          scanners: vuln
+          format: sarif
+          output: trivy-results.sarif
+          ignore-unfixed: true
+          exit-code: '0'
+
+      - name: Upload SARIF
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: trivy-results.sarif
+          category: trivy-rescan
+
+      - name: Trivy gate
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: ${{ steps.ecr.outputs.registry }}/p2-devsecops-app:${{ github.sha }}
+          scanners: vuln
+          format: table
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          output: trivy-table.txt
+          exit-code: '1'
+          skip-setup-trivy: true
+
+      - name: Summary
+        if: always()
+        run: |
+          cat trivy-table.txt || true
+          {
+            echo "### 재스캔 (CRITICAL, HIGH)"
+            echo ""
+            echo "커밋 \`${{ github.sha }}\` 의 이미지를 오늘 자 취약점 DB로 다시 검사했다."
+            echo ""
+            echo '```'
+            cat trivy-table.txt 2>/dev/null || echo "결과 파일 없음"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
