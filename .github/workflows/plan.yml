@@ -60,4 +60,26 @@ jobs:
 
       - name: Terraform plan
         working-directory: infra
-        run: terraform plan -lock=false -input=false
+        run: |
+          set -o pipefail
+          terraform plan -lock=false -input=false -no-color | tee plan.txt
+
+      - name: Summary
+        if: always()
+        working-directory: infra
+        run: |
+          {
+            echo "### terraform plan"
+            echo ""
+            echo '```'
+            grep -E '^(Plan:|No changes|Error)' plan.txt || echo "요약 줄 없음"
+            echo '```'
+            echo ""
+            echo "<details><summary>대상 리소스</summary>"
+            echo ""
+            echo '```'
+            grep -E '^  # ' plan.txt | grep -v 'values not yet known' || echo "없음"
+            echo '```'
+            echo ""
+            echo "</details>"
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -26,3 +26,11 @@ updates:
     open-pull-requests-limit: 10
     commit-message:
       prefix: chore
+  
+  # app/Dockerfile의 FROM python:3.13-slim-bookworm에 상위 태그가 나오면 갱신 PR이 열린다.
+  - package-ecosystem: docker
+    directory: /app
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: chore
