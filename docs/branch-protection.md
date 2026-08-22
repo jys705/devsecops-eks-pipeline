@@ -82,3 +82,15 @@ Checkov와 Trivy 체크 런은 `No new alerts in code changed by this pull reque
 main보다 뒤처진 PR이 생기고 나서야 배너가 없다는 것으로 알았다. 설정 하나가
 빠진 것은 그 설정이 판정할 상황이 와야 드러난다. 그래서 화면을 훑는 대신
 `gh api`로 룰셋을 받아 규칙 여섯 개와 각 값을 출력으로 대조했다.
+
+번외: `CKV_AWS_149`와 `CKV2_AWS_57`을 `.checkov.yml`의 `skip-check`에 근거와 함께 적었다. 
+인라인 `#checkov:skip` 주석으로 먼저 시도했는데, 로컬 스캔은 `Skipped checks: 2`로
+세고 checkov 잡은 통과했으며 SARIF의 두 결과에 `suppressions`가 `accepted`로 실렸고 code
+scanning 알림 테이블에는 두 건이 만들어지지도 않았다. 그런데도 머지 보호는 그 PR의 분석에
+실린 결과 개수를 세어 차단했다. 닫을 알림이 없어 `Dismiss alert`로 풀 수 없었다. 임계값을
+`Only errors`로 내리면 풀리지만 Warning 등급을 통과시키게 되어 쓰지 않았다. `skip-check`는
+전역이라 그 체크가 모든 파일에서 돌지 않고, 예외가 코드 옆이 아니라 설정 파일에 놓인다.
+
+`bootstrap/kms.tf`의 인라인 셋은 그대로 둔다. 어차피 그 줄이 앞으로 PR 변경분에 들어가지 않아
+머지 보호가 판정할 상황이 오지 않는다. 인라인 억제가 통해서가 아니라 판정 대상이 되지
+않기 때문이다.
