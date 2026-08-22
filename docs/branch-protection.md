@@ -94,3 +94,13 @@ scanning 알림 테이블에는 두 건이 만들어지지도 않았다. 그런�
 `bootstrap/kms.tf`의 인라인 셋은 그대로 둔다. 어차피 그 줄이 앞으로 PR 변경분에 들어가지 않아
 머지 보호가 판정할 상황이 오지 않는다. 인라인 억제가 통해서가 아니라 판정 대상이 되지
 않기 때문이다.
+
+구현이 끝난 뒤 `.github/dependabot.yml`의 생태계 셋에 `open-pull-requests-limit: 0`을
+추가해 갱신 pull request 생성을 중단했다. 저장소가 생성했던 AWS 리소스를 전부 제거해
+OIDC 프로바이더와 CI 역할이 계정에 없고, `plan` 잡이 수임에 실패해 어떤 pull request도
+머지할 수 없기 때문이다. Settings에는 version updates를 끄는 토글이 없고 그 항목은
+`Configure` 버튼으로 이 파일을 열 뿐이므로, 중단 여부가 저장소 안에 기록으로 남는다.
+
+Dependabot alerts는 활성 상태로 두었다. 새 결함은 Security 탭에 계속 누적되고 pull
+request만 생성되지 않는다. security updates와 grouped security updates는 비활성
+상태이며 그 항목들도 pull request를 생성하지 않는다.
