@@ -4,6 +4,13 @@
 # pip는 requirements.txt가 있는 디렉터리를 가리켜야 하므로 /app
 
 version: 2
+
+# 구현이 끝나 저장소가 생성했던 AWS 리소스를 전부 제거했다. OIDC 프로바이더와 CI 역할이
+# 계정에 없어 plan 잡이 수임에 실패하고 어떤 pull request도 머지할 수 없다. 갱신
+# pull request가 계속 생성되면 머지되지 않은 채 누적되므로 셋 다 0으로 설정해 중단한다.
+# Dependabot alerts는 활성 상태로 두어 새 결함이 Security 탭에 계속 누적된다.
+# 생태계 설정 자체는 기록으로 남긴다.
+
 updates:
   - package-ecosystem: github-actions
     directory: "/"
@@ -12,7 +19,7 @@ updates:
       day: monday
       time: "09:00"
       timezone: Asia/Seoul
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 0
     commit-message:
       prefix: chore
 
@@ -23,7 +30,7 @@ updates:
       day: monday
       time: "09:00"
       timezone: Asia/Seoul
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 0
     commit-message:
       prefix: chore
   
@@ -32,5 +39,6 @@ updates:
     directory: /app
     schedule:
       interval: weekly
+    open-pull-requests-limit: 0
     commit-message:
       prefix: chore
