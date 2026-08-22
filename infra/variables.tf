@@ -56,3 +56,10 @@ variable "github_default_branch" {
   type        = string
   default     = "main"
 }
+
+variable "app_secret" {
+  description = "시크릿 값. apply 시점에 TF_VAR_app_secret으로 주입한다"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
