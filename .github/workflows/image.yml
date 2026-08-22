@@ -41,9 +41,17 @@ jobs:
             sleep 1
           done
           echo
-          docker logs smoke
+          docker logs smoke > smoke.log 2>&1
+          cat smoke.log
           docker rm -f smoke
           [ "${OK:-0}" = "1" ]
+          # /healthz가 응답해도 기동 중 ERROR가 있으면 통제와 런타임이 부딪힌 것이다.
+          # gunicorn 판올림이 control socket을 켜면서 읽기 전용 파일시스템에 막힌 것을
+          # 응답만 보는 판정이 통과시켰다.
+          if grep -q '\[ERROR\]' smoke.log; then
+            echo "기동 로그에 ERROR가 있다"
+            exit 1
+          fi
 
       - name: Trivy report
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
