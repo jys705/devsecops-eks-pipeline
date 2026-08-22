@@ -11,11 +11,14 @@ locals {
 
 
 resource "aws_vpc" "main" {
-  cidr_block           = var.vpc_cidr
+  cidr_block = var.vpc_cidr
+
+  # 둘이 함께 켜져 있어야 인터페이스 엔드포인트의 Private DNS가 동작하고,
+  # EKS가 만드는 프라이빗 호스팅 영역도 같은 조건을 요구한다.
+  # enable_dns_support는 기본값이 true지만 짝을 이루는 값이라 함께 명시한다.
+  # enable_dns_hostnames는 기본값이 false다.
   enable_dns_support   = true
   enable_dns_hostnames = true
-  # 의도적으로 틀린 값. 기본값이 false라 안 써도 같지만, 명시해야 다음 단계에서 무엇을 바꿨는지 diff에 남는다. 
-  # enable_dns_support는 기본값이 true. 이 둘이 함께 켜져 있어야 인터페이스 엔드포인트의 Private DNS가 동작하고, EKS가 만드는 프라이빗 호스팅 영역도 같은 조건을 요구
 
   tags = {
     Name = "${var.project}-vpc"

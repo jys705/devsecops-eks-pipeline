@@ -24,7 +24,6 @@ resource "aws_ecr_lifecycle_policy" "app" {
   # k8s 매니페스트가 커밋 SHA 태그 하나를 고정하는데, main push마다 이미지가 하나씩
   # 늘고 Dependabot PR 머지도 main push다. 5로 두면 고정한 태그가 재현 apply 전에
   # 만료되고, 그 실패는 apply가 아니라 파드 기동에서 ImagePullBackOff로 나타난다.
-  # 20은 현재 이미지 4개에 남은 단계의 push와 Dependabot 머지를 더해 잡은 수다.
   policy = jsonencode({
     rules = [{
       rulePriority = 1

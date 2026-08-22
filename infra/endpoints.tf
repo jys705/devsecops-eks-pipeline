@@ -23,7 +23,7 @@ resource "aws_vpc_endpoint" "interface" {
   subnet_ids          = [for s in aws_subnet.private : s.id]
   security_group_ids  = [aws_security_group.endpoint.id]
   private_dns_enabled = true
-  # 가장 중요한 한 줄이다. 기본값은 false인데, 끄면 엔엔드포인트는 만들어지지만 ssm.ap-northeast-2.amazonaws.com이 여전히 공인 IP로 풀려서 아무 데도 못 닿는다.
+  # 가장 중요한 한 줄이다. 기본값은 false인데, 끄면 엔드포인트는 만들어지지만 ssm.ap-northeast-2.amazonaws.com이 여전히 공인 IP로 풀려서 아무 데도 못 닿는다.
 
   tags = {
     Name = "${var.project}-${each.key}"
